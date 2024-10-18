@@ -10,6 +10,8 @@ project(raspalib)
 
 option(RASPA_WITH_APPS "Build included applications" OFF)
 option(RASPA_WITH_TESTS "Build and run unit tests" OFF)
+option(NINA_PI_HAT "Build to use with the Melbourne Instruments NINA Rpi hat" TRUE)
+option(MONIQUE_PI_HAT "Build to use with the Melbourne Instruments MONIQUE Rpi hat" FALSE)
 
 #######################
 #  Cross compilation  #
@@ -73,7 +75,12 @@ target_link_libraries(raspa PRIVATE pthread)
 
 set_property(TARGET raspa PROPERTY CXX_STANDARD 17)
 target_compile_options(raspa PRIVATE -Wall -Wextra -ffast-math -feliminate-unused-debug-types -fno-exceptions)
-
+if (${NINA_PI_HAT})
+    target_compile_options(raspa PRIVATE -DMELBINST_PI_HAT=0)
+endif()
+if (${MONIQUE_PI_HAT})
+    target_compile_options(raspa PRIVATE -DMELBINST_PI_HAT=1)
+endif()
 
 #############
 #  Install  #

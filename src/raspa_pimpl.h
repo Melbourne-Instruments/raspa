@@ -68,7 +68,13 @@ constexpr int STOP_REQUEST_DELAY_US = 10000;
 constexpr int THREAD_CREATE_DELAY_US = 10000;
 
 // Number of kernel memory pages raspa allocates
+#if MELBINST_PI_HAT == 0
 constexpr int NUM_PAGES_KERNEL_MEM = 16;
+#elif MELBINST_PI_HAT == 1
+constexpr int NUM_PAGES_KERNEL_MEM = 8;
+#else
+#error Unknown Melbourne Instruments RPi target device
+#endif
 
 // Num of audio buffers.
 constexpr int NUM_BUFFERS = 2;
@@ -735,12 +741,12 @@ protected:
         _buffer_size_in_samples = _buffer_size_in_frames * _num_codec_chans;
 
         _driver_buffer_audio_out[0] = _driver_buffer;
-        _driver_buffer_audio_in[0] = _driver_buffer_audio_out[0] + ((SPI_BUFFER_TRANSFER_SIZE*2)/4);
+        _driver_buffer_audio_in[0] = _driver_buffer_audio_out[0] + ((SPI_BUFFER_TRANSFER_SIZE * NUM_FPGAS)/4);
 
-        _driver_buffer_audio_out[1] = _driver_buffer_audio_in[0] + ((SPI_BUFFER_TRANSFER_SIZE*2)/4);
-        _driver_buffer_audio_in[1] = _driver_buffer_audio_out[1] + ((SPI_BUFFER_TRANSFER_SIZE*2)/4);
+        _driver_buffer_audio_out[1] = _driver_buffer_audio_in[0] + ((SPI_BUFFER_TRANSFER_SIZE * NUM_FPGAS)/4);
+        _driver_buffer_audio_in[1] = _driver_buffer_audio_out[1] + ((SPI_BUFFER_TRANSFER_SIZE * NUM_FPGAS)/4);
 
-        _driver_cv_out = (uint32_t*) _driver_buffer_audio_in[1] + ((SPI_BUFFER_TRANSFER_SIZE*2)/4);
+        _driver_cv_out = (uint32_t*) _driver_buffer_audio_in[1] + ((SPI_BUFFER_TRANSFER_SIZE * NUM_FPGAS)/4);
         _driver_cv_in = _driver_cv_out + 1;
     }
 
@@ -847,7 +853,7 @@ protected:
             return;
         }
 
-        for (int i = 0; i < ((SPI_BUFFER_TRANSFER_SIZE*2)/4); i++)
+        for (int i = 0; i < ((SPI_BUFFER_TRANSFER_SIZE * NUM_FPGAS)/4); i++)
         {
             _driver_buffer_audio_out[0][i] = 0;
             _driver_buffer_audio_out[1][i] = 0;

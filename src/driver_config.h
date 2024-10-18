@@ -42,6 +42,13 @@
 
 #define RASPA_PROCESSING_TASK_PRIO  90
 
+// The number of FPGAs supported
+#if MELBINST_PI_HAT == 0
+constexpr int NUM_FPGAS = 2;
+#elif MELBINST_PI_HAT == 1
+constexpr int NUM_FPGAS = 1;
+#endif
+
  /**
   * @brief Enumeration to denote various codec sample formats
   */

@@ -14,7 +14,7 @@
 
 /**
  * @brief Header file which deals converting the samples from integer to floating point
- * @copyright 2020-2023 Melbourne Instruments, Australia
+ * @copyright 2017-2029 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
 
 #ifndef SAMPLE_CONVERSION_H_
@@ -43,8 +43,15 @@ constexpr float CODEC_TO_FLOAT_SCALING_FACTOR = INT32_TO_FLOAT_SCALING_FACTOR;
 namespace raspa {
 
 constexpr auto DEFAULT_CODEC_FORMAT = RaspaCodecFormat::INT24_LJ;
+#if MELBINST_PI_HAT == 0
 constexpr int MIN_NUM_CHANNELS = 38;
 constexpr int MAX_NUM_CHANNELS = 38;
+#elif MELBINST_PI_HAT == 1
+constexpr int MIN_NUM_CHANNELS = 20;
+constexpr int MAX_NUM_CHANNELS = 20;
+#else
+#error Unknown Melbourne Instruments RPi target device
+#endif
 constexpr int NUM_FPGA_STATUS_REGS = 48;
 constexpr int MIN_BUFFER_SIZE = 8;
 constexpr int MAX_BUFFER_SIZE = 1024;
@@ -344,8 +351,8 @@ std::chrono::_V2::system_clock::time_point start_of_day;
      */
     void float32n_to_codec_format(int32_t* dst, float* src) override
     {
-        int32_t dst_unpacked[(20*BUFFER_SIZE)*2];
-        float   *src_channel_ptrs[20*2];
+        int32_t dst_unpacked[(20*BUFFER_SIZE) * NUM_FPGAS];
+        float   *src_channel_ptrs[20 * NUM_FPGAS];
         int32_t *dst_unpacked_ptr = dst_unpacked;
 #ifdef RASPA_SPI_DATA_CHECKSUMED        
         uint32_t checksum = 0;
@@ -474,22 +481,28 @@ std::chrono::_V2::system_clock::time_point start_of_day;
          ** processed by one FPGA at this stage
          */
         src_channel_ptrs[0] = src;
+#if MELBINST_PI_HAT == 0
         src_channel_ptrs[20] = src_channel_ptrs[0];
+#endif
         src += BUFFER_SIZE;
         src_channel_ptrs[1] = src;
+#if MELBINST_PI_HAT == 0
         src_channel_ptrs[21] = src_channel_ptrs[1];
+#endif
         for (int i=2; i<20; i++) {
             src += BUFFER_SIZE;
             src_channel_ptrs[i] = src; 
         }
+#if MELBINST_PI_HAT == 0
         for (int i=22; i<40; i++) {
             src += BUFFER_SIZE;
             src_channel_ptrs[i] = src; 
         }
+#endif
 
-        /* Process each block for the two FPGAs */
+        /* Process each FPGA */
         float **src_channel_ptrs_block = src_channel_ptrs;
-        for (int f=0; f<2; f++)
+        for (int f=0; f<NUM_FPGAS; f++)
         {
             /* Process each sample block */
             for (int n=0; n<BUFFER_SIZE; n+=2) {
@@ -569,6 +582,7 @@ std::chrono::_V2::system_clock::time_point start_of_day;
         dst_ptr += 2;
 #endif
 
+#if MELBINST_PI_HAT == 0
         /* 
          ** Pack the samples into 24 bits, 4 samples at a time
          ** for the second FPGA
@@ -593,6 +607,7 @@ std::chrono::_V2::system_clock::time_point start_of_day;
 #ifdef RASPA_SPI_DATA_CHECKSUMED
         // Set the checksum
         *dst_ptr = checksum;
+#endif
 #endif
     }
 
